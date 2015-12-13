@@ -14,11 +14,12 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
 
 	var window: UIWindow?
 
+	let engine = FourChanAudioEngine()
 
 	func application(application: UIApplication, didFinishLaunchingWithOptions launchOptions: [NSObject: AnyObject]?) -> Bool {
 		// Override point for customization after application launch.
-		let z = FourChanAudioEngine()
-		z.doSomething()
+
+		engine.doSomething()
 		return true
 	}
 
