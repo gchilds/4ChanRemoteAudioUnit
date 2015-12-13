@@ -19,11 +19,10 @@ class FourChanAudioEngine {
 	var audioIndex = Float64(0)
 	
 	func generateAudio(abl: AudioBufferList, numberFrames: UInt32) {
-		print("buf \(abl.mBuffers)")
 		assert(abl.mNumberBuffers == 1)
 		let numChannels = abl.mBuffers.mNumberChannels
-		let pointer = UnsafePointer<Float>(abl.mBuffers.mData)
-		var arr = Array<Float>(UnsafeBufferPointer<Float>(start: pointer, count:Int(numberFrames*numChannels)))
+		let pointer = UnsafeMutablePointer<Float>(abl.mBuffers.mData)
+		let arr = UnsafeMutableBufferPointer<Float>(start: pointer, count:Int(numberFrames*numChannels))
 		
 		for i in 0..<numberFrames {
 			for j in 0..<numChannels {
@@ -34,6 +33,11 @@ class FourChanAudioEngine {
 	}
 	
 	func doSomething () {
+		let sesh = AVAudioSession.sharedInstance()
+		try! sesh.setCategory(AVAudioSessionCategoryPlayback)
+		try! sesh.setActive(true)
+		
+		
 		// var so I can take its address as a UnsafePointer<>
 		var desc = AudioComponentDescription(componentType: kAudioUnitType_Output, componentSubType: kAudioUnitSubType_RemoteIO, componentManufacturer: kAudioUnitManufacturer_Apple, componentFlags: 0, componentFlagsMask: 0)
 		
@@ -49,7 +53,7 @@ class FourChanAudioEngine {
 			let myObject = Unmanaged<FourChanAudioEngine>.fromOpaque(COpaquePointer(inRefCon)).takeUnretainedValue()
 			
 			myObject.generateAudio(ioData.memory, numberFrames: inNumberFrames)
-			
+
 			return noErr
 		}
 		
@@ -66,7 +70,7 @@ class FourChanAudioEngine {
 		let bits = UInt32(32)
 		let frameSize = numChans*bits/8
 		
-		var streamFormat = AudioStreamBasicDescription(mSampleRate: sampleRate, mFormatID: kAudioFormatLinearPCM, mFormatFlags: kAudioFormatFlagIsFloat, mBytesPerPacket: frameSize, mFramesPerPacket: 1, mBytesPerFrame: frameSize, mChannelsPerFrame: numChans, mBitsPerChannel: bits, mReserved: 0)
+		var streamFormat = AudioStreamBasicDescription(mSampleRate: sampleRate, mFormatID: kAudioFormatLinearPCM, mFormatFlags: kLinearPCMFormatFlagIsFloat, mBytesPerPacket: frameSize, mFramesPerPacket: 1, mBytesPerFrame: frameSize, mChannelsPerFrame: numChans, mBitsPerChannel: bits, mReserved: 0)
 		
 		
 		err = AudioUnitSetProperty(au, kAudioUnitProperty_StreamFormat, kAudioUnitScope_Input, speakerBus, &streamFormat, UInt32(sizeof(AudioStreamBasicDescription)))
