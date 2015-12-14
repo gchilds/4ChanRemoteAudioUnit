@@ -31,7 +31,7 @@ class FourChanAudioEngine {
 		}
 	}
 	
-	let inputProc: @convention(c) (UnsafeMutablePointer<Void>, UnsafeMutablePointer<AudioUnitRenderActionFlags>, UnsafePointer<AudioTimeStamp>, UInt32, UInt32, UnsafeMutablePointer<AudioBufferList>) -> OSStatus = {
+	let inputProc: AURenderCallback = {
 		(inRefCon, ioActionFlags, inTimeStamp, inBusNumber, inNumberFrames, ioData) in
 		
 		let engine = Unmanaged<FourChanAudioEngine>.fromOpaque(COpaquePointer(inRefCon)).takeUnretainedValue()
