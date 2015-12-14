@@ -42,6 +42,7 @@ class FourChanAudioEngine {
 	}
 	
 	func doSomething () {
+		// Probably not necessary.
 		let sesh = AVAudioSession.sharedInstance()
 		try! sesh.setCategory(AVAudioSessionCategoryPlayback)
 		try! sesh.setActive(true)
