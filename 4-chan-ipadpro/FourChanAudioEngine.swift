@@ -7,7 +7,6 @@
 //
 
 // TODO: post on codereview
-// TODO: better c callback on SO?
 
 import AVFoundation
 
@@ -32,6 +31,16 @@ class FourChanAudioEngine {
 		}
 	}
 	
+	let inputProc: @convention(c) (UnsafeMutablePointer<Void>, UnsafeMutablePointer<AudioUnitRenderActionFlags>, UnsafePointer<AudioTimeStamp>, UInt32, UInt32, UnsafeMutablePointer<AudioBufferList>) -> OSStatus = {
+		(inRefCon, ioActionFlags, inTimeStamp, inBusNumber, inNumberFrames, ioData) in
+		
+		let engine = Unmanaged<FourChanAudioEngine>.fromOpaque(COpaquePointer(inRefCon)).takeUnretainedValue()
+		
+		engine.generateAudio(ioData.memory, numberFrames: inNumberFrames)
+		
+		return noErr
+	}
+	
 	func doSomething () {
 		let sesh = AVAudioSession.sharedInstance()
 		try! sesh.setCategory(AVAudioSessionCategoryPlayback)
@@ -46,16 +55,7 @@ class FourChanAudioEngine {
 		var err = AudioComponentInstanceNew(comp, &au)
 		assert(err == noErr, "AudioComponentInstanceNew")
 		
-		// TODO: SO is there a better way to write this?
-		let inputProc: @convention(c) (UnsafeMutablePointer<Void>, UnsafeMutablePointer<AudioUnitRenderActionFlags>, UnsafePointer<AudioTimeStamp>, UInt32, UInt32, UnsafeMutablePointer<AudioBufferList>) -> OSStatus = {
-			(inRefCon, ioActionFlags, inTimeStamp, inBusNumber, inNumberFrames, ioData) -> OSStatus in
-			
-			let myObject = Unmanaged<FourChanAudioEngine>.fromOpaque(COpaquePointer(inRefCon)).takeUnretainedValue()
-			
-			myObject.generateAudio(ioData.memory, numberFrames: inNumberFrames)
 
-			return noErr
-		}
 		
 		var input = AURenderCallbackStruct(inputProc: inputProc, inputProcRefCon: UnsafeMutablePointer(Unmanaged.passUnretained(self).toOpaque()))
 		
@@ -66,7 +66,7 @@ class FourChanAudioEngine {
 			speakerBus, &input, UInt32(sizeof(AURenderCallbackStruct)))
 		assert(err == noErr, "AudioUnitSetProperty: render callback")
 		
-		let numChans = UInt32(2)
+		let numChans = UInt32(4)
 		let bits = UInt32(32)
 		let frameSize = numChans*bits/8
 		
